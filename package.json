@@ -1,0 +1,38 @@
+{
+  "name": "thermosim-3d",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "build:single": "SINGLE=1 vite build --outDir dist-single",
+    "typecheck": "tsc --noEmit",
+    "test:props": "tsx tests/validate_props.ts",
+    "test:templates": "tsx tests/run_templates.ts",
+    "test:components": "tsx tests/new_comps.ts"
+  },
+  "dependencies": {
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.17.10",
+    "@react-three/postprocessing": "^2.16.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.169.0",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^26.6.6",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/three": "^0.169.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0",
+    "vite-plugin-singlefile": "^2.0.3"
+  },
+  "description": "Browser-based 3D thermodynamics & liquid-cooling system simulator (React, Three.js, coupled network solver, real fluid properties)."
+}
