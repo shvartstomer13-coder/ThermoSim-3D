@@ -1,4 +1,6 @@
-s = open('/home/claude/vid/art_patched.html', encoding='utf8').read()
+# usage: python patch2.py <input.html> <output.html>
+import sys
+s = open(sys.argv[1], encoding='utf8').read()
 def rep(old, new, cnt=1):
     global s
     c = s.count(old)
@@ -108,5 +110,5 @@ rep('''            x.jsx("meshStandardMaterial", {
               onBeforeCompile: irm ? (sh) => irPatch(sh, irAmb().uniforms, 0.93) : void 0,
               customProgramCacheKey: irm ? () => "irt" : void 0,
             }),''')
-open('/home/claude/vid/art_patched2.html', 'w', encoding='utf8').write(s)
+open(sys.argv[2], 'w', encoding='utf8').write(s)
 print('ok', len(s))

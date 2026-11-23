@@ -7,7 +7,7 @@ function fxMonitors() {
   if (!FX.nom) { if (wt.sim.time > 2) FX.nom = { ...sg }; return; }
   const N = FX.nom;
   const M = [
-    ["flowFws", sg.m_fws < 0.5 * N.m_fws, "crit", () => `זרימת מי המתקן ירדה ל-${fxF(sg.m_fws)} kg/s (מתוך ${fxF(N.m_fws)}). מהירות המשאבות היעילה n = ${fxF(S.units.fws.A.w * 100 + S.units.fws.B.w * 100, 0)}% והזרימה פרופורציונית לה (חוק הזיקה). ללא זרימה אין ל-CDU עם מה להעביר חום.`, "ṁ ∝ n ,  Q_CDU = ε·C_min·(T_h,in − T_c,in) ,  C_min = ṁ_c·cp → 0 ⇒ Q_CDU → 0"],
+    ["flowFws", sg.m_fws < 0.5 * N.m_fws, "crit", () => `זרימת מי המתקן ירדה ל-${fxF(sg.m_fws)} kg/s (מתוך ${fxF(N.m_fws)}). מהירות המשאבות היעילה n = ${fxF(S.units.fws.A.w * 100 + S.units.fws.B.w * 100, 0)}% והזרימה נקבעת בנקודת החיתוך של עקומת המשאבה (H ∝ n²) עם עקומת המערכת, כך שהיא יורדת מהר יותר מ-n. ללא זרימה אין ל-CDU עם מה להעביר חום.`, "H_p = 1.2·H_r·(n/n_r)² − 0.2·H_r·(ṁ/ṁ_r)²  =  ΔP_sys(ṁ)/(ρg) ,  Q_CDU = ε·C_min·(T_h,in − T_c,in) ,  C_min = ṁ_c·cp → 0 ⇒ Q_CDU → 0"],
     ["flowFwsBack", FX.mon.flowFws && sg.m_fws > 0.9 * N.m_fws, "ok", () => `זרימת מי המתקן התאוששה ל-${fxF(sg.m_fws)} kg/s.`, ""],
     ["flowCw", sg.m_cw < 0.5 * N.m_cw, "crit", () => `זרימת מי המעבה ירדה ל-${fxF(sg.m_cw)} kg/s (מתוך ${fxF(N.m_cw)}). הצ'ילר לא יכול להפיל חום מהמעבה ולכן פוסק.`, "Q_c = Q_e + W ,  ṁ_c ↓ ⇒ T_c ↑ ⇒ COP = η₂·T_e/(T_c − T_e) ↓"],
     ["flowTcs", sg.m_tcs < 0.5 * N.m_tcs, "crit", () => `זרימת נוזל הקירור למעגל הארונות (TCS) ירדה ל-${fxF(sg.m_tcs)} kg/s. כל ארון מקבל פחות נוזל ולכן ΔT שלו גדל.`, "Q = ṁ·cp·ΔT  ⇒  ΔT_rack = Q/(ṁ·cp)"],
@@ -30,7 +30,7 @@ function fxMonitors() {
 }
 /* ---------- equation sheets ---------- */
 const FX_EQ = {
-  pump: ["H = 1.2·H_r·(n/n_r)² − 0.2·H_r·(ṁ/ṁ_r)²", "ΔP = ρ·g·H", "ṁ ∝ n (חוק הזיקה)", "P_shaft = ṁ·ΔP/(ρ·η)", "NRV: מהירות 0 וזרימה חוזרת אסורה, H += 40·H_r·|ṁ|/ṁ_r"],
+  pump: ["H = 1.2·H_r·(n/n_r)² − 0.2·H_r·(ṁ/ṁ_r)²", "ΔP = ρ·g·H", "נקודת עבודה: H_pump(ṁ, n) = H_system(ṁ)", "P_shaft = ṁ·ΔP/(ρ·η)", "NRV: מהירות 0 וזרימה חוזרת אסורה, H += 40·H_r·|ṁ|/ṁ_r"],
   cdu: ["ε = (1−e^(−NTU(1−Cr)))/(1−Cr·e^(−NTU(1−Cr)))", "Q = ε·C_min·(T_h,in − T_c,in)", "C = ṁ·cp", "משאבת משני: אותה עקומה כמו משאבה"],
   chiller: ["Q_e = min(Q_load, cap_kw)", "COP = η₂·T_e/(T_c − T_e)", "W = Q_e/COP", "Q_c = Q_e + W"],
   cooling_tower: ["NTU = −ln(1−ε_d)·n^0.6·(ṁ/ṁ_d)^−0.4", "ε = 1 − e^−NTU", "Q = ε·ṁ·cp·(T_in − T_wb)", "ΔP = dp0·(ṁ/ṁ_d)^1.85 + ρ·g·lift"],
@@ -53,7 +53,7 @@ const FX_CHARTS = [
   { id: "freq", g: "חשמל", title: "תדר הגנרטור", unit: "Hz", s: [["f_gen", "f", FX_C.yellow]], eq: ["f_ss = 50·(1 − R·P_gen/P_rated)", "df/dt = (f_ss − f)/τ_g"], why: (g) => [`נפילת תדר בעומס: R=${FX.cfg.gen_droop * 100}% ⇒ ב-${fxF(g.gen_load, 0)}% עומס התדר הוא ${fxF(g.f_gen, 2)} Hz.`] },
   { id: "fuel", g: "חשמל", title: "דלק בגנרטור", unit: "L", s: [["fuel", "מפלס", FX_C.orange]], eq: ["V̇ = bsfc·P_gen/η_alt", "bsfc = " + FX.cfg.bsfc_L_kwh + " L/kWh (הנחה)"], why: (g) => [`צריכה נוכחית ${fxF(FX.cfg.bsfc_L_kwh * (g.P_gen / FX.cfg.gen_alt_eta), 0)} L/h. נותרו ${fxF(g.fuel / Math.max(FX.cfg.bsfc_L_kwh * g.P_gen / FX.cfg.gen_alt_eta, 1e-6), 1)} שעות.`] },
   { id: "pumpspd", g: "הידראוליקה", title: "מהירות משאבות (ראשית A / גיבוי B)", unit: "%", s: [["n_fwsA", "מי מתקן A", FX_C.blue], ["n_fwsB", "מי מתקן B", FX_C.cyan], ["n_cwA", "מי מעבה A", FX_C.orange], ["n_cwB", "מי מעבה B", FX_C.yellow], ["n_cduA", "CDU A", FX_C.green], ["n_cduB", "CDU B", FX_C.pink]], eq: ["ω(t) = ω₀·e^(−t/τ)  (האטה חופשית)", "dω/dt = 1/t_ramp  (עלייה בתחילת עבודה)"], why: () => [`τ = ${FX.cfg.pump_tau_s} s, זיהוי ${FX.cfg.det_s} s, שיפוע התנעה לגיבוי ${FX.cfg.standby_ramp_s} s.`] },
-  { id: "flows", g: "הידראוליקה", title: "ספיקות", unit: "kg/s", s: [["m_fws", "מי מתקן", FX_C.blue], ["m_cw", "מי מעבה", FX_C.orange], ["m_tcs", "TCS (CDU משני)", FX_C.green], ["m_rack", "ארון A1", FX_C.pink]], eq: ["ṁ ∝ n", "ΔP_pump(ṁ) = ΔP_system(ṁ)", "נקודת עבודה: חיתוך עקומת משאבה ועקומת מערכת"], why: (g) => [`מי מתקן ${fxF(g.m_fws)} kg/s, מי מעבה ${fxF(g.m_cw)} kg/s, TCS ${fxF(g.m_tcs)} kg/s.`] },
+  { id: "flows", g: "הידראוליקה", title: "ספיקות", unit: "kg/s", s: [["m_fws", "מי מתקן", FX_C.blue], ["m_cw", "מי מעבה", FX_C.orange], ["m_tcs", "TCS (CDU משני)", FX_C.green], ["m_rack", "ארון A1", FX_C.pink]], eq: ["ΔP_pump(ṁ) = ΔP_system(ṁ)", "נקודת עבודה: חיתוך עקומת משאבה ועקומת מערכת"], why: (g) => [`מי מתקן ${fxF(g.m_fws)} kg/s, מי מעבה ${fxF(g.m_cw)} kg/s, TCS ${fxF(g.m_tcs)} kg/s.`] },
   { id: "dp", g: "הידראוליקה", title: "הפרשי לחץ", unit: "kPa", s: [["dP_fws", "משאבת מי מתקן", FX_C.blue], ["dP_cw", "משאבת מי מעבה", FX_C.orange], ["dP_rack", "ארון A1", FX_C.green], ["flt_dP", "מסנן", FX_C.red]], eq: ["ΔP = (f·L/D + K)·ρ·v²/2", "סתימה: K_clog = (1/(C_c(1−c)) − 1)²"], why: (g) => [`ΔP מסנן ${fxF(g.flt_dP)} kPa.`] },
   { id: "tcs", g: "תרמי", title: "טמפרטורות מעגל הארונות (TCS)", unit: "°C", s: [["T_sup", "אספקה לארונות", FX_C.cyan], ["T_ret", "חזרה מהארונות", FX_C.orange], ["T_chip", "שבב (A1)", FX_C.red]], eq: ["C·dT/dt = Q_rack − Q_CDU", "T_chip = T_liq,out + P·R_plate", "C_eff = Σ m·cp (מסת הנוזל במעגל)"], why: (g) => { const n = FX.tS.length; const dt = n > 5 ? FX.tS[n - 1] - FX.tS[n - 6] : 0; const dT = n > 5 ? FX.series.T_ret[n - 1] - FX.series.T_ret[n - 6] : 0; const rate = dt > 0 ? dT / dt : 0; const dQ = g.Q_rack - g.Q_cdu; const C = Math.abs(rate) > 0.005 ? dQ / rate : NaN; return [`Q_rack − Q_CDU = ${fxF(g.Q_rack, 0)} − ${fxF(g.Q_cdu, 0)} = ${fxF(dQ, 0)} kW.`, `קצב חימום ${fxF(rate * 60, 1)} °C/דקה${Number.isFinite(C) ? ` ⇒ קיבול תרמי יעיל C ≈ ${fxF(C / 1000, 1)} MJ/K` : ""}.`]; } },
   { id: "fws", g: "תרמי", title: "טמפרטורות מי המתקן והמעבה", unit: "°C", s: [["T_fwsIn", "כניסה ל-CDU", FX_C.cyan], ["T_fwsOut", "יציאה מ-CDU", FX_C.orange], ["T_ht", "יציאת מגדל HT-01", FX_C.green], ["T_ct", "יציאת מגדל CT-02", FX_C.yellow]], eq: ["Q = ε·ṁ·cp·(T_in − T_wb)", "ε = 1 − e^−NTU"], why: (g) => [`T_wb עיצוב 27°C, יציאת HT-01 ${fxF(g.T_ht)}°C, CT-02 ${fxF(g.T_ct)}°C.`] },
@@ -65,35 +65,64 @@ const FX_CHARTS = [
 /* ---------- chart drawing ---------- */
 function fxDraw(cv, ch, xr) {
   const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
-  if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  if (!W || !H) return;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
   const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
   const st = getComputedStyle(document.documentElement);
-  const fg3 = (st.getPropertyValue("--fg3") || "#888").trim(), line = (st.getPropertyValue("--line") || "#333").trim(), fg2 = (st.getPropertyValue("--fg2") || "#bbb").trim();
-  const L = 44, R = 8, T = 8, B = 20, w = W - L - R, h = H - T - B;
-  const ts = FX.tS; if (ts.length < 2) { g.fillStyle = fg3; g.font = "11px sans-serif"; g.fillText("ממתין לנתונים (הפעל סימולציה)", L + 6, H / 2); return; }
+  const fg = (st.getPropertyValue("--fg") || "#eee").trim(), fg2 = (st.getPropertyValue("--fg2") || "#bbb").trim(), line = (st.getPropertyValue("--line") || "#333").trim(), bg = (st.getPropertyValue("--bg") || "#111").trim();
+  const L = 54, R = 14, T = 24, B = 26, w = W - L - R, h = H - T - B;
+  g.direction = "ltr";
+  const ts = FX.tS; if (ts.length < 2) { g.fillStyle = fg2; g.font = "13px sans-serif"; g.textAlign = "center"; g.direction = "rtl"; g.fillText("ממתין לנתונים (הפעל סימולציה)", W / 2, H / 2); return; }
   const t0 = xr ? xr[0] : ts[0], t1 = xr ? xr[1] : ts[ts.length - 1];
   let lo = 1e30, hi = -1e30;
-  for (const [k] of ch.s) { const a = FX.series[k]; if (!a) continue; for (let i = 0; i < a.length; i++) { const v = a[i]; if (!Number.isFinite(v)) continue; if (ts[i] < t0) continue; lo = Math.min(lo, v); hi = Math.max(hi, v); } }
+  for (const [k] of ch.s) { const a = FX.series[k]; if (!a) continue; for (let i = 0; i < a.length; i++) { const v = a[i]; if (!Number.isFinite(v) || ts[i] < t0) continue; lo = Math.min(lo, v); hi = Math.max(hi, v); } }
   if (lo > hi) { lo = 0; hi = 1; }
-  if (hi - lo < 1e-6) { hi = lo + 1; }
-  const pad = (hi - lo) * 0.08; lo -= pad; hi += pad; if (ch.unit === "%" ) { lo = Math.min(lo, 0); }
+  if (hi - lo < 1e-6) { const m = Math.max(Math.abs(lo) * 0.05, 0.5); lo -= m; hi += m; }
+  const pad = (hi - lo) * 0.1; lo -= pad; hi += pad; if (ch.unit === "%") { lo = Math.min(lo, 0); }
+  // nice ticks
+  const span = hi - lo, raw = span / 5, mag = Math.pow(10, Math.floor(Math.log10(raw))), stp = [1, 2, 2.5, 5, 10].map((q) => q * mag).find((q) => q >= raw) || raw;
+  lo = Math.floor(lo / stp) * stp; hi = Math.ceil(hi / stp) * stp;
   const X = (t) => L + ((t - t0) / Math.max(t1 - t0, 1e-6)) * w, Y = (v) => T + (1 - (v - lo) / (hi - lo)) * h;
-  g.direction = "ltr"; g.strokeStyle = line; g.lineWidth = 1; g.fillStyle = fg3; g.font = "10px sans-serif"; g.textAlign = "right";
-  for (let i = 0; i <= 4; i++) { const v = lo + ((hi - lo) * i) / 4, y = Y(v); g.beginPath(); g.moveTo(L, y); g.lineTo(L + w, y); g.stroke(); g.fillText(Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(1), L - 4, y + 3); }
-  g.textAlign = "center";
-  for (let i = 0; i <= 4; i++) { const t = t0 + ((t1 - t0) * i) / 4; g.fillText(t >= 120 ? (t / 60).toFixed(1) + "m" : t.toFixed(0) + "s", L + (w * i) / 4, H - 6); }
-  for (const m of FX.marks) { if (m.t < t0 || m.t > t1) continue; g.strokeStyle = m.sev === "crit" ? "#f8717188" : m.sev === "ok" ? "#4ade8088" : "#fbbf2488"; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(X(m.t), T); g.lineTo(X(m.t), T + h); g.stroke(); g.setLineDash([]); }
-  for (const [k, , col] of ch.s) {
-    const a = FX.series[k]; if (!a) continue; g.strokeStyle = col; g.lineWidth = 1.8; g.beginPath(); let st0 = false;
-    for (let i = 0; i < a.length; i++) { if (!Number.isFinite(a[i]) || ts[i] < t0) continue; const x = X(ts[i]), y = Y(a[i]); if (!st0) { g.moveTo(x, y); st0 = true; } else g.lineTo(x, y); } g.stroke();
+  const dec = stp >= 10 ? 0 : stp >= 1 ? (Number.isInteger(stp) ? 0 : 1) : stp >= 0.1 ? 1 : 2;
+  g.font = "12px system-ui, sans-serif"; g.textAlign = "right"; g.textBaseline = "middle";
+  for (let v = lo; v <= hi + stp * 1e-6; v += stp) { const y = Y(v); g.strokeStyle = line; g.globalAlpha = Math.abs(v) < stp * 1e-6 ? 1 : 0.55; g.lineWidth = 1; g.beginPath(); g.moveTo(L, y); g.lineTo(L + w, y); g.stroke(); g.globalAlpha = 1; g.fillStyle = fg2; g.fillText(fxF(v, dec), L - 7, y); }
+  g.textAlign = "center"; g.textBaseline = "alphabetic";
+  for (let i = 0; i <= 5; i++) { const t = t0 + ((t1 - t0) * i) / 5; g.fillStyle = fg2; g.fillText(t >= 120 ? (t / 60).toFixed(1) + " min" : t.toFixed(0) + " s", L + (w * i) / 5, H - 7); }
+  g.strokeStyle = fg2; g.globalAlpha = 0.7; g.beginPath(); g.moveTo(L, T); g.lineTo(L, T + h); g.lineTo(L + w, T + h); g.stroke(); g.globalAlpha = 1;
+  // unit at top-left
+  g.textAlign = "left"; g.fillStyle = fg2; g.font = "600 11px system-ui, sans-serif"; g.fillText(ch.unit, 6, 12);
+  // event markers
+  for (const m of FX.marks) { if (m.t < t0 || m.t > t1) continue; const c = m.sev === "crit" ? "#f87171" : m.sev === "ok" ? "#4ade80" : "#fbbf24"; const x = X(m.t); g.strokeStyle = c; g.globalAlpha = 0.85; g.lineWidth = 1.2; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(x, T); g.lineTo(x, T + h); g.stroke(); g.setLineDash([]); g.globalAlpha = 1; g.fillStyle = c; g.beginPath(); g.moveTo(x - 5, T); g.lineTo(x + 5, T); g.lineTo(x, T + 7); g.fill(); }
+  // series
+  g.save(); g.beginPath(); g.rect(L, T - 2, w, h + 4); g.clip();
+  ch.s.forEach(([k, , col], si) => {
+    const a = FX.series[k]; if (!a) return; g.strokeStyle = col; g.lineWidth = 2.6; g.lineJoin = "round"; g.lineCap = "round"; g.beginPath(); let st0 = false, fx0 = 0, lx = 0, ly = 0;
+    for (let i = 0; i < a.length; i++) { if (!Number.isFinite(a[i]) || ts[i] < t0) continue; const x = X(ts[i]), y = Y(a[i]); if (!st0) { g.moveTo(x, y); st0 = true; fx0 = x; } else g.lineTo(x, y); lx = x; ly = y; }
+    g.stroke();
+    if (st0 && si === 0 && ch.s.length === 1) { g.lineTo(lx, T + h); g.lineTo(fx0, T + h); g.closePath(); const gr = g.createLinearGradient(0, T, 0, T + h); gr.addColorStop(0, col + "55"); gr.addColorStop(1, col + "00"); g.fillStyle = gr; g.fill(); }
+    if (st0) { g.fillStyle = col; g.beginPath(); g.arc(lx, ly, 4, 0, 7); g.fill(); g.strokeStyle = bg; g.lineWidth = 1.5; g.stroke(); }
+  });
+  g.restore();
+  // hover crosshair
+  const hx = cv._hx;
+  if (hx != null && hx >= L && hx <= L + w) {
+    const tq = t0 + ((hx - L) / w) * (t1 - t0); let bi = 0, bd = 1e30; for (let i = 0; i < ts.length; i++) { const d = Math.abs(ts[i] - tq); if (d < bd) { bd = d; bi = i; } }
+    const x = X(ts[bi]); g.strokeStyle = fg; g.globalAlpha = 0.5; g.lineWidth = 1; g.beginPath(); g.moveTo(x, T); g.lineTo(x, T + h); g.stroke(); g.globalAlpha = 1;
+    const rows = [["t", fxF(ts[bi], 0) + " s", fg]]; for (const [k, nm, col] of ch.s) { const v = FX.series[k]?.[bi]; if (Number.isFinite(v)) { g.fillStyle = col; g.beginPath(); g.arc(x, Y(v), 4, 0, 7); g.fill(); rows.push([nm, fxF(v, Math.abs(v) >= 100 ? 0 : 2) + " " + ch.unit, col]); } }
+    g.font = "12px system-ui, sans-serif"; g.direction = "rtl"; const bw = Math.max(...rows.map((r) => g.measureText(r[0] + "  " + r[1]).width)) + 26, bh = rows.length * 17 + 8;
+    let bx = x + 10; if (bx + bw > L + w) bx = x - 10 - bw; const by = T + 2;
+    g.fillStyle = bg; g.globalAlpha = 0.93; g.fillRect(bx, by, bw, bh); g.globalAlpha = 1; g.strokeStyle = line; g.strokeRect(bx, by, bw, bh);
+    rows.forEach((r, i) => { const y = by + 16 + i * 17; g.fillStyle = r[2]; g.textAlign = "right"; g.fillText(r[0], bx + bw - 8, y); g.direction = "ltr"; g.textAlign = "left"; g.fillStyle = fg; g.fillText(r[1], bx + 8, y); g.direction = "rtl"; });
   }
 }
 /* ---------- panel ---------- */
 (function fxPanel() {
   const css = `
-  #fxbtn{position:fixed;left:16px;bottom:44px;z-index:60;background:var(--panel2);color:var(--fg);border:1px solid var(--line2);border-radius:10px;padding:8px 14px;font:600 13px/1 sans-serif;cursor:pointer;box-shadow:0 4px 14px #0006;display:flex;gap:8px;align-items:center}
-  #fxbtn:hover{border-color:var(--accent)} #fxbtn b{color:var(--accent)}
-  #fxp{position:fixed;left:16px;bottom:84px;z-index:61;width:min(760px,94vw);height:min(720px,78vh);min-width:420px;min-height:320px;background:var(--panel);color:var(--fg);border:1px solid var(--line2);border-radius:12px;box-shadow:0 10px 40px #000a;display:none;flex-direction:column;overflow:hidden;resize:both;font:13px/1.5 sans-serif;direction:rtl}
+  #fxbtn{position:fixed;left:18px;transition:left .2s,transform .15s;bottom:128px;z-index:60;background:linear-gradient(135deg,#f97316,#dc2626);color:#fff;border:1px solid #fdba74;border-radius:14px;padding:12px 20px 12px 18px;font:700 15px/1 system-ui,sans-serif;cursor:pointer;box-shadow:0 6px 22px #dc262666,0 0 0 0 #f9731688;display:flex;gap:10px;align-items:center;animation:fxpulse 2.4s ease-out infinite;transition:transform .15s}
+  #fxbtn .ic{font-size:20px;filter:drop-shadow(0 0 4px #fde047)} #fxbtn small{display:block;font:500 11px/1.2 system-ui,sans-serif;opacity:.85;margin-top:3px}
+  @keyframes fxpulse{0%{box-shadow:0 6px 22px #dc262666,0 0 0 0 #f97316aa}70%{box-shadow:0 6px 22px #dc262666,0 0 0 14px #f9731600}100%{box-shadow:0 6px 22px #dc262666,0 0 0 0 #f9731600}}
+  #fxbtn:hover{transform:translateY(-2px) scale(1.03)} #fxbtn.act{animation:none;background:linear-gradient(135deg,#475569,#1e293b);border-color:#94a3b8}
+  #fxp{position:fixed;left:16px;bottom:194px;z-index:61;width:min(760px,94vw);height:min(720px,calc(100vh - 290px));min-width:420px;min-height:320px;background:var(--panel);color:var(--fg);border:1px solid var(--line2);border-radius:12px;box-shadow:0 10px 40px #000a;display:none;flex-direction:column;overflow:hidden;resize:both;font:13px/1.5 sans-serif;direction:rtl}
   #fxp.open{display:flex} #fxp *{box-sizing:border-box}
   #fxh{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);cursor:move;background:var(--panel2)}
   #fxh .t{font-weight:700;flex:1} #fxh button{background:var(--panel3);color:var(--fg);border:1px solid var(--line2);border-radius:6px;padding:3px 9px;cursor:pointer;font:600 12px sans-serif}
@@ -111,9 +140,9 @@ function fxDraw(cv, ch, xr) {
   .fxlog{border-top:1px solid var(--line);padding:6px 2px} .fxlog .tm{font:600 11px monospace;color:var(--fg3);direction:ltr;display:inline-block;min-width:54px}
   .fxlog .crit{color:#f87171} .fxlog .warn{color:#fbbf24} .fxlog .ok{color:#4ade80}
   .fxeq{direction:ltr;text-align:left;font:12px monospace;color:var(--fg2);background:var(--bg);border-radius:6px;padding:4px 8px;margin-top:4px;white-space:pre-wrap}
-  .fxch canvas{width:100%;height:170px;display:block}
-  .fxleg{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--fg2);margin:4px 0}
-  .fxleg i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-left:4px;vertical-align:middle}
+  .fxch canvas{width:100%;height:230px;display:block;background:var(--bg);border-radius:8px;margin-top:6px;cursor:crosshair}
+  .fxleg{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--fg);margin:8px 0 4px} .fxleg b{direction:ltr;unicode-bidi:isolate;display:inline-block;margin-right:8px;font-family:ui-monospace,monospace;font-weight:600}
+  .fxleg i{display:inline-block;width:16px;height:4px;border-radius:2px;margin-left:6px;vertical-align:middle}
   .fxwhy summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:12px}
   .fxwhy ul{margin:6px 0;padding:0 18px;color:var(--fg2)}
   .fxsel{background:var(--bg);color:var(--fg);border:1px solid var(--line2);border-radius:6px;padding:4px 8px}
@@ -124,14 +153,14 @@ function fxDraw(cv, ch, xr) {
   .fxstat div{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 9px} .fxstat small{display:block;color:var(--fg3);font-size:11px} .fxstat b{font-size:15px;direction:ltr;display:inline-block}
   `;
   const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
-  const btn = document.createElement("div"); btn.id = "fxbtn"; btn.innerHTML = "⚡ <span>כשלים וגרפי מצב</span>"; document.body.appendChild(btn);
+  const btn = document.createElement("div"); btn.id = "fxbtn"; btn.innerHTML = '<span class="ic">⚡</span><span>כשלים וגרפי מצב<small>הפסקת חשמל · משאבות · דליפות</small></span>'; btn.title = "סימולציית כשלים וגרפי מצב לכל רכיב"; document.body.appendChild(btn);
   const p = document.createElement("div"); p.id = "fxp"; document.body.appendChild(p);
   p.innerHTML = `<div id="fxh"><span class="t">כשלים וגרפי מצב</span><span id="fxtime" style="font:12px monospace;direction:ltr;color:var(--fg2)"></span><button id="fxrun"></button><select id="fxspd" class="fxsel"><option value="1">×1</option><option value="10">×10</option><option value="30">×30</option><option value="60">×60</option><option value="120">×120</option></select><button id="fxx">✕</button></div><div id="fxtabs"></div><div id="fxb"></div>`;
   const TABS = [["sc", "תרחישים"], ["gr", "גרפים"], ["cp", "רכיב"], ["as", "הנחות"]];
   let tab = "sc", selComp = "p_fws";
   const tabs = p.querySelector("#fxtabs"), body = p.querySelector("#fxb");
   TABS.forEach(([k, n]) => { const b = document.createElement("button"); b.textContent = n; b.dataset.k = k; b.onclick = () => { tab = k; render(); }; tabs.appendChild(b); });
-  btn.onclick = () => { p.classList.toggle("open"); render(); };
+  btn.onclick = () => { p.classList.toggle("open"); btn.classList.toggle("act", p.classList.contains("open")); render(); };
   p.querySelector("#fxx").onclick = () => p.classList.remove("open");
   p.querySelector("#fxrun").onclick = () => { const u = ye.getState(); ye.setState({ running: !u.running }); upd(); };
   p.querySelector("#fxspd").onchange = (e) => { ye.setState({ speed: +e.target.value }); };
@@ -164,11 +193,11 @@ function fxDraw(cv, ch, xr) {
   }
   let chartRefs = [];
   function renderGr() {
-    let h = ""; ["חשמל", "הידראוליקה", "תרמי", "דליפה"].forEach((gname) => { h += `<h4 style="margin:6px 0">${gname}</h4>`; FX_CHARTS.filter((c) => c.g === gname).forEach((c) => { h += `<div class="fxc fxch" data-ch="${c.id}"><div style="font-weight:700">${c.title} <span style="color:var(--fg3);font-weight:400">[${c.unit}]</span></div><canvas></canvas><div class="fxleg">${c.s.map((s) => `<span><i style="background:${s[2]}"></i>${s[1]}</span>`).join("")}</div><details class="fxwhy"><summary>למה זה קורה? משוואות והסבר</summary><div class="fxeq">${c.eq.join("\n")}</div><ul class="why"></ul></details></div>`; }); });
-    body.innerHTML = h; chartRefs = [...body.querySelectorAll("[data-ch]")].map((el) => ({ el, ch: FX_CHARTS.find((c) => c.id === el.dataset.ch), cv: el.querySelector("canvas"), ul: el.querySelector("ul") }));
+    let h = ""; ["חשמל", "הידראוליקה", "תרמי", "דליפה"].forEach((gname) => { h += `<h4 style="margin:6px 0">${gname}</h4>`; FX_CHARTS.filter((c) => c.g === gname).forEach((c) => { h += `<div class="fxc fxch" data-ch="${c.id}"><div style="font-weight:700">${c.title} <span style="color:var(--fg3);font-weight:400">[${c.unit}]</span></div><canvas></canvas><div class="fxleg">${c.s.map((s) => `<span><i style="background:${s[2]}"></i><bdi>${s[1]}</bdi><b data-k="${s[0]}" style="color:${s[2]}">–</b></span>`).join("")}</div><details class="fxwhy"><summary>למה זה קורה? משוואות והסבר</summary><div class="fxeq">${c.eq.join("\n")}</div><ul class="why"></ul></details></div>`; }); });
+    body.innerHTML = h; chartRefs = [...body.querySelectorAll("[data-ch]")].map((el) => ({ el, ch: FX_CHARTS.find((c) => c.id === el.dataset.ch), cv: el.querySelector("canvas"), ul: el.querySelector("ul"), vs: [...el.querySelectorAll(".fxleg b")] })); chartRefs.forEach((r) => { r.cv.onmousemove = (e) => { const b = r.cv.getBoundingClientRect(); r.cv._hx = e.clientX - b.left; fxDraw(r.cv, r.ch); }; r.cv.onmouseleave = () => { r.cv._hx = null; fxDraw(r.cv, r.ch); }; });
     drawCharts();
   }
-  function drawCharts() { if (!FX.S) return; const sg = fxSig(); chartRefs.forEach((r) => { fxDraw(r.cv, r.ch); if (r.el.querySelector("details").open) { try { r.ul.innerHTML = r.ch.why(sg).map((x) => `<li>${x}</li>`).join(""); } catch {} } }); }
+  function drawCharts() { if (!FX.S) return; const sg = fxSig(); chartRefs.forEach((r) => { fxDraw(r.cv, r.ch); r.vs.forEach((b) => { const a = FX.series[b.dataset.k]; const v = a ? a[a.length - 1] : NaN; b.textContent = Number.isFinite(v) ? fxF(v, Math.abs(v) >= 100 ? 0 : Math.abs(v) >= 10 ? 1 : 2) + " " + r.ch.unit : "–"; }); if (r.el.querySelector("details").open) { try { r.ul.innerHTML = r.ch.why(sg).map((x) => `<li>${x}</li>`).join(""); } catch {} } }); }
   function renderCp() {
     const comps = wt.sim.scene.comps.filter((c) => c.type !== "pipe" || true);
     const sel = ye.getState().selected && fxComp(ye.getState().selected) ? ye.getState().selected : selComp; selComp = sel;
@@ -213,3 +242,7 @@ function NXM_pumpSet({ c: i }) {
     x.jsx(zt, { r: 0.04, h: 1.0, rot: [Math.PI / 2, 0, 0], pos: [0.12, 0.75, -0.5], m: { kind: "steel", ch: "hot" } }),
   ] });
 }
+
+/* ---------- open properties panel on first component selection ---------- */
+(function () { const pos = (st) => { const l = (st.propsOpen ? (st.propsW || 316) : 0) + 18 + "px", b = document.getElementById("fxbtn"), q = document.getElementById("fxp"); if (b) b.style.left = l; if (q) q.style.left = l; }; setTimeout(() => pos(ye.getState()), 0); ye.subscribe((st, pv) => { if (st.propsOpen !== pv.propsOpen || st.propsW !== pv.propsW) pos(st); }); })();
+(function () { let done = false; ye.subscribe((st, pv) => { if (done) return; if (st.selected && st.selected !== pv.selected) { done = true; if (!st.propsOpen) ye.setState({ propsOpen: !0 }); } }); })();

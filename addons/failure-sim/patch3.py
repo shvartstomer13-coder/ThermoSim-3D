@@ -1,5 +1,8 @@
 import sys
-s=open('/home/claude/vid/art_patched2.html',encoding='utf-8').read()
+# usage: python patch3.py <input.html> <output.html>   (input = output of patch2.py)
+import os
+HERE=os.path.dirname(os.path.abspath(__file__))
+s=open(sys.argv[1],encoding='utf-8').read()
 def rep(old,new,count=1):
     global s
     n=s.count(old)
@@ -57,10 +60,13 @@ rep('''      O1("flip", "Swap horizontal leg order (X↔Z)", !1, "Route"),
 rep('function Ek({ c: i }) {','function Ek({ c: i, unit: unitB }) {')
 rep('rate: () => ((e()?.speed ?? 0) / 100) * 18,\n        children: Array.from({ length: 6 }, (o, a) =>\n          x.jsx(\n            st,\n            {\n              s: [0.02, 0.15, 0.015],','rate: () => fxRate(i, unitB, e()?.speed),\n        children: Array.from({ length: 6 }, (o, a) =>\n          x.jsx(\n            st,\n            {\n              s: [0.02, 0.15, 0.015],')
 rep('    pump: Ek,\n','    pump: NXM_pumpSet,\n')
-fx=open('/home/claude/vid/fx_core.js',encoding='utf-8').read()+'\n'+open('/home/claude/vid/fx_ui.js',encoding='utf-8').read()
+rep('    showFlow: !0,\n    showLabels: !0,\n','    showFlow: !0,\n    showLabels: !1,\n')
+rep('    treeOpen: !0,\n    propsOpen: !0,\n','    treeOpen: !1,\n    propsOpen: !1,\n')
+rep('window.__ts = {','window.__ts = { loadTpl: od,')
+fx=open(os.path.join(HERE,'fx_core.js'),encoding='utf-8').read()+'\n'+open(os.path.join(HERE,'fx_ui.js'),encoding='utf-8').read()
 assert '</script' not in fx.lower()
 marker='\n</script>\n    <style rel="stylesheet" crossorigin>'
 assert s.count(marker)==1
 s=s.replace(marker,'\n/* === FAILURE ENGINE === */\n'+fx+marker)
-open('/home/claude/vid/art_patched3.html','w',encoding='utf-8').write(s)
+open(sys.argv[2],'w',encoding='utf-8').write(s)
 print('ok',len(s))
