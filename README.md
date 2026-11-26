@@ -16,11 +16,19 @@ Build a plant from real components, connect them with pipes, and watch a fully c
 
 <img src="docs/screenshots/main-dark.jpg" alt="AI data-center liquid-cooling plant: cooling towers, chiller, pumps, CDU and four GPU racks" width="100%">
 
-[**Download**](release/ThermoSim3D.html) · [Features](#highlights) · [Failure simulation](#failure-simulation) · [Screenshots](#screenshots) · [Controls](#controls) · [Build](#run-from-source)
+[**Download**](release/ThermoSim3D.html) · [Promo video](docs/video/ThermoSim3D_promo.mp4) · [Features](#highlights) · [Failure simulation](#failure-simulation) · [Screenshots](#screenshots) · [Controls](#controls) · [Build](#run-from-source)
 
 </div>
 
 ---
+
+<div align="center">
+
+[<img src="docs/screenshots/promo-poster.jpg" alt="ThermoSim 3D promo video, 60 s" width="80%">](docs/video/ThermoSim3D_promo.mp4)
+
+<sub>60-second overview: real thermodynamic equations, flow simulation, grid loss and N+1 pump failure. Click to play.</sub>
+
+</div>
 
 ## Try it in 10 seconds
 
